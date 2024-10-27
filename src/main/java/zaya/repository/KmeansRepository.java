@@ -7,6 +7,7 @@ import zaya.utils.PrintUtils;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 public class KmeansRepository {
     private final String TABLE_NAME = "kmeans_data";
@@ -16,13 +17,13 @@ public class KmeansRepository {
         this.connection = connection;
     }
 
-    public List<KmeansData> getKmeansData() throws SQLException {
+    public List<KmeansData> getKmeansData(Map<String, Integer> productMap) throws SQLException {
         Long startExecution = System.currentTimeMillis();
         List<KmeansData> kmeansDataList = new ArrayList<>();
 
         PrintUtils.print("Getting pending kmeans list.");
 
-        String query = "SELECT * FROM " + TABLE_NAME;
+        String query = "SELECT revenue, UPPER(product) as product FROM " + TABLE_NAME;
         PreparedStatement ps = null;
         ResultSet rs = null;
         try {
@@ -30,12 +31,13 @@ public class KmeansRepository {
             rs = ps.executeQuery();
 
             while (rs.next()) {
-                kmeansDataList.add(new KmeansData(
-                        KmeansUtils.convertTextToNumeric(rs.getString("revenue")),
-                        KmeansUtils.parseToBigDecimal(rs.getString("revenue")),
-                        KmeansUtils.convertTextToNumeric(rs.getString("product")),
-                        rs.getString("product")
-                ));
+                if (rs.getString("product") != null && productMap.containsKey(rs.getString("product"))) {
+                    kmeansDataList.add(new KmeansData(
+                            KmeansUtils.parseToBigDecimal(rs.getString("revenue")).doubleValue(),
+                            KmeansUtils.parseToBigDecimal(rs.getString("revenue")),
+                            productMap.get(rs.getString("product")).doubleValue(),
+                            rs.getString("product")));
+                }
             }
         } finally {
             if (Boolean.FALSE.equals(ps == null)) {
@@ -48,5 +50,34 @@ public class KmeansRepository {
 
         PrintUtils.duration("Getting kmeans", startExecution);
         return kmeansDataList;
+    }
+
+    public List<String> getProductList() throws SQLException {
+        Long startExecution = System.currentTimeMillis();
+        List<String> productList = new ArrayList<>();
+
+        PrintUtils.print("Getting product list.");
+
+        String query = "SELECT DISTINCT(UPPER(product)) as product FROM " + TABLE_NAME;
+        PreparedStatement ps = null;
+        ResultSet rs = null;
+        try {
+            ps = connection.prepareStatement(query);
+            rs = ps.executeQuery();
+
+            while (rs.next()) {
+                productList.add(rs.getString("product"));
+            }
+        } finally {
+            if (Boolean.FALSE.equals(ps == null)) {
+                ps.close();
+            }
+            if (Boolean.FALSE.equals(rs == null)) {
+                rs.close();
+            }
+        }
+
+        PrintUtils.duration("Getting product list", startExecution);
+        return productList;
     }
 }

@@ -3,7 +3,9 @@ package zaya.utils;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.commons.math3.ml.clustering.CentroidCluster;
 
@@ -57,11 +59,11 @@ public class KmeansUtils {
             }
         }
 
-        System.out.println();
-        System.out.printf("Cluster com maior média de receitas: %d Média %.2f",  maxClusterMean, maxClusterMeanRevenue);
-        System.out.println();
-        System.out.println();
-        System.out.println();
+        // System.out.println();
+        // System.out.printf("Cluster com maior média de receitas: %d Média %.2f",  maxClusterMean, maxClusterMeanRevenue);
+        // System.out.println();
+        // System.out.println();
+        // System.out.println();
 
         return maxClusterMean;
     }
@@ -71,9 +73,7 @@ public class KmeansUtils {
             return BigDecimal.ZERO;
         }
 
-
         String sanitizedValue = value.replaceAll("[^0-9.,]", "").trim();
-        sanitizedValue = sanitizedValue.replace(".", "").replace(",", ".");
 
         try {
             if(isBigDecimal(sanitizedValue)) {
@@ -99,5 +99,15 @@ public class KmeansUtils {
         if (!list.contains(item)) {
             list.add(item);
         }
+    }
+
+    public static Map<String, Integer> buildProductMap(List<String> productList) {
+        Map<String, Integer> productMap = new HashMap<>();
+
+        for (int i = 0; i < productList.size(); i++) {
+            productMap.put(productList.get(i), i);
+        }
+
+        return productMap;
     }
 }

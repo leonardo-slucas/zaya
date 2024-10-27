@@ -9,8 +9,8 @@ import zaya.repository.KmeansRepository;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.text.ParseException;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.commons.math3.ml.clustering.CentroidCluster;
 import org.apache.commons.math3.ml.clustering.KMeansPlusPlusClusterer;
@@ -24,17 +24,16 @@ public class KmeansService {
             PrintUtils.printError("Finishing execution. Connection from ActionContext is null!");
             throw new RuntimeException("Connection from ActionContext is null!");
         }
+       
 
         this.actionContext = actionContext;
         this.kmeansRepository = new KmeansRepository(actionContext.getConnection());
     }
 
     public void execute() throws RuntimeException, SQLException, IOException, ParseException {
-        int k = 15;
+        int k = 10;
         int maxIterations = 100;
-        ArrayList<String> productList = new ArrayList<>();
-        List<KmeansData> kmeansDataList = kmeansRepository.getKmeansData();
-
+        List<KmeansData> kmeansDataList = buildKmeansDataList();
         PrintUtils.setDebug(actionContext);
 
         List<CentroidCluster<KmeansData>> clusters = kMeansClustering(kmeansDataList, k, maxIterations);
@@ -44,20 +43,20 @@ public class KmeansService {
         for (int i = 0; i < kmeansDataList.size(); i++) {
             KmeansData kmeans = kmeansDataList.get(i);
             if (kmeans.getCluster() == maxClusterMean) {
-                // PrintUtils.print("Kmeans: " + i + " :: Cluster: " + kmeans.getCluster() + " :: Receita " + kmeans.getRevenue() + " :: Produto: " + kmeans.getProduct());
-
-                KmeansUtils.addItemIfNotExists(productList, kmeans.getProduct());
+                PrintUtils.print("Kmeans: " + i + " :: Cluster: " + kmeans.getCluster() + " :: Receita " + kmeans.getRevenue() + " :: Produto: " + kmeans.getProduct());
             }
-        }
-
-        System.out.println("Produtos: ");
-        for (String item : productList) {
-            System.out.println(item);
         }
     }
 
-    public static List<CentroidCluster<KmeansData>> kMeansClustering(List<KmeansData> kmeansDataList, int k,
-            int maxIterations) {
+    private List<KmeansData> buildKmeansDataList() throws RuntimeException, SQLException, IOException, ParseException{
+        List<String> productList = kmeansRepository.getProductList();
+        Map<String, Integer> productMap = KmeansUtils.buildProductMap(productList);
+        List<KmeansData> kmeansDataList = kmeansRepository.getKmeansData(productMap);
+
+        return kmeansDataList;
+    } 
+
+    private static List<CentroidCluster<KmeansData>> kMeansClustering(List<KmeansData> kmeansDataList, int k, int maxIterations) {
         KMeansPlusPlusClusterer<KmeansData> clusterer = new KMeansPlusPlusClusterer<>(k, maxIterations);
         List<CentroidCluster<KmeansData>> clusters = clusterer.cluster(kmeansDataList);
 

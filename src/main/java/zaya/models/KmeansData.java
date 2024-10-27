@@ -11,8 +11,8 @@ public class KmeansData implements Clusterable {
     String product;
 
     public KmeansData(double kmeansRevenue, BigDecimal revenue, double kmeansProduct, String product) {
-        // this.points = new double[] { kmeansRevenue, kmeansProduct };
-        this.points = new double[] { kmeansRevenue };
+        this.points = new double[] { kmeansRevenue, kmeansProduct };
+        // this.points = new double[] { kmeansRevenue };
         this.revenue = revenue;
         this.product = product;
     }
